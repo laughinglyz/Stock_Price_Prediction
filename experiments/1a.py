@@ -4,6 +4,8 @@ from code import run_model, HSI_lstm
 import ta
 import pandas as pd
 import numpy as np
+import torch
+import os
 
 try:
     import matplotlib.pyplot as plt
@@ -12,6 +14,7 @@ except:
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
+PATH = './trained_models'
 OHLCV = ['Open', 'High', 'Low', 'Close', 'Volume']
 tech_indicators = ['volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'momentum_mfi',
        'volume_em', 'volume_sma_em', 'volume_vpt', 'volume_nvi', 'volume_vwap',
@@ -41,6 +44,7 @@ df = df.dropna()
 df = ta.add_all_ta_features(df, "Open", "High", "Low", "Close", "Volume", True)
 
 train_X, train_Y, valid_X, valid_Y, valid_m, test_X, test_Y, test_m, scaler = preprocess(df)
+os.chdir(PATH)
 for idx, indicator in enumerate(tech_indicators):
     train_features = train_X[:,:,[0,1,2,3,4,idx+5]]
     valid_features = valid_X[:,:,[0,1,2,3,4,idx+5]]
@@ -54,8 +58,32 @@ for idx, indicator in enumerate(tech_indicators):
     model, train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy, n_epochs = \
         run_model(model.float(), scaler, train_set=train_set, valid_X=valid_features, valid_Y=valid_Y, valid_m=valid_m)
 
+    plt.xlabel("epoch")
+    plt.ylabel("training_loss")
+    plt.plot(range(n_epochs),train_loss)
+    plt.show()
+
+    plt.xlabel("epoch")
+    plt.ylabel("validation_loss")
+    plt.plot(range(n_epochs),valid_loss)
+    plt.show()
+
+    plt.xlabel("epoch")
+    plt.ylabel("validation_accuracy")
+    plt.plot(range(n_epochs),valid_accuracy)
+    plt.show()
+
     loss, test_RMSE, test_MAPE, test_accuracy = \
         run_model(model, scaler, running_mode='test', test_X=test_features, test_Y=test_Y, test_m=test_m)
 
-    
-    
+    print(loss)
+    print(test_RMSE)
+    print(test_MAPE)
+    print(test_accuracy)
+
+    filename = indicator+".pt"
+    f = open(filename,"w+")
+    f.close()
+    torch.save(model.state_dict(), filename)
+    break
+ 

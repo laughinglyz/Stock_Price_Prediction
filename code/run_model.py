@@ -18,7 +18,7 @@ def run_model(model,scaler, running_mode='train', train_set=None, valid_X=None, 
 		trainloader = DataLoader(train_set,batch_size=batch_size,shuffle=shuffle)
 		optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 		last_loss, loss_change, e_count = float('inf'),float('inf'), 0
-		while (n_epochs-e_count) and loss_change >= stop_thr:
+		while (n_epochs-e_count):
 			model, tl = _train(model,trainloader,optimizer)
 			train_loss.append(tl)
 			cur_loss,RMSE,MAPE,accuracy = _test(model, valid_X, valid_Y, valid_m, scaler)
