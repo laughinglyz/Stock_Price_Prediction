@@ -1,7 +1,6 @@
 numpy
-pytest
+torch
 pandas
 scipy
 sklearn
-python3.7
 ta

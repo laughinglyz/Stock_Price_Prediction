@@ -23,7 +23,6 @@ class HSI_lstm(nn.Module):
             input_size = input_size,
             hidden_size = hidden_size,
             num_layers = num_layers,
-            dropout = 1.0,
             batch_first= True)
         self.output = nn.Linear(hidden_size,1)
 
@@ -55,7 +54,6 @@ class HSI_gru(nn.Module):
             input_size = input_size,
             hidden_size = hidden_size,
             num_layers = num_layers,
-            dropout = 1.0,
             batch_first= True)
         self.output = nn.Linear(hidden_size,1)
 
