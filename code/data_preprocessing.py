@@ -4,19 +4,39 @@ import ta
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-PRICE =  ['Open', 'High', 'Low', 'Close']
+tech_indicators = ['volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'momentum_mfi',
+       'volume_em', 'volume_sma_em', 'volume_vpt', 'volume_nvi', 'volume_vwap',
+       'volatility_atr', 'volatility_bbm', 'volatility_bbh', 'volatility_bbl',
+       'volatility_bbw', 'volatility_bbp', 'volatility_bbhi',
+       'volatility_bbli', 'volatility_kcc', 'volatility_kch', 'volatility_kcl',
+       'volatility_kcw', 'volatility_kcp', 'volatility_kchi',
+       'volatility_kcli', 'volatility_dcl', 'volatility_dch', 'trend_macd',
+       'trend_macd_signal', 'trend_macd_diff', 'trend_sma_fast',
+       'trend_sma_slow', 'trend_ema_fast', 'trend_ema_slow', 'trend_adx',
+       'trend_adx_pos', 'trend_adx_neg', 'trend_vortex_ind_pos',
+       'trend_vortex_ind_neg', 'trend_vortex_ind_diff', 'trend_trix',
+       'trend_mass_index', 'trend_cci', 'trend_dpo', 'trend_kst',
+       'trend_kst_sig', 'trend_kst_diff', 'trend_ichimoku_conv',
+       'trend_ichimoku_base', 'trend_ichimoku_a', 'trend_ichimoku_b',
+       'trend_visual_ichimoku_a', 'trend_visual_ichimoku_b', 'trend_aroon_up',
+       'trend_aroon_down', 'trend_aroon_ind', 'trend_psar_up',
+       'trend_psar_down', 'trend_psar_up_indicator',
+       'trend_psar_down_indicator', 'momentum_rsi', 'momentum_tsi',
+       'momentum_uo', 'momentum_stoch', 'momentum_stoch_signal', 'momentum_wr',
+       'momentum_ao', 'momentum_kama', 'momentum_roc', 'others_dr',
+       'others_dlr', 'others_cr']
 
 def preprocess(df, period = 20):
+    df['Mid'] = df[['High','Low']].mean(axis = 1)
+    df = df[['Mid', "Open", "High", "Low", "Close"]+tech_indicators]
     scaler =  MinMaxScaler()
-    df2 = df[PRICE].copy()
     data = scaler.fit_transform(df)
-    data_X, data_Y, mid_points = [],[],[]
+    scaler.fit(df['Mid'].to_numpy().reshape(-1,1))
+    data_X, data_Y = [],[]
     for i in range(data.shape[0]-period):
         data_X.append(data[i:i+period])
-        data_Y.append(df2.iloc[i+period][['High','Low']].mean())
-        mid_points.append(df2.iloc[i+period-1][['High','Low']].mean())
-    data_X, data_Y, mid_points = np.array(data_X), np.array(data_Y), np.array(mid_points)
-    train_X, test_X, train_Y, test_Y, train_m, test_m = train_test_split(data_X, data_Y, mid_points, train_size = 0.8, random_state = 3)
-    train_X, valid_X, train_Y, valid_Y, train_m, valid_m = train_test_split(train_X, train_Y, train_m, train_size = 0.75, random_state = 3)
-    scaler.fit(train_Y.reshape(-1,1))
-    return train_X, scaler.transform(train_Y.reshape(-1,1)), valid_X, valid_Y, valid_m, test_X, test_Y, test_m, scaler
+        data_Y.append(df.iloc[i+period]['Mid'])
+    data_X, data_Y = np.array(data_X), np.array(data_Y)
+    train_X, test_X, train_Y, test_Y = train_test_split(data_X, data_Y, train_size = 0.8, random_state = 666)
+    train_X, valid_X, train_Y, valid_Y = train_test_split(train_X, train_Y, train_size = 0.75, random_state = 666)
+    return data_X, data_Y, train_X, scaler.transform(train_Y.reshape(-1,1)), valid_X, valid_Y, test_X, test_Y, scaler

@@ -10,18 +10,18 @@ from sklearn.metrics import mean_squared_error,accuracy_score
 def MAPE(prediction, true):
 	return np.mean(np.abs((true-prediction)/true)) * 100
 
-def run_model(model,scaler, running_mode='train', train_set=None, valid_X=None, valid_Y=None, valid_m=None, test_X=None, test_Y=None, test_m=None, 
-	batch_size=8, learning_rate=1e-3, n_epochs=40, stop_thr=1e-5, shuffle=True):
+def run_model(model,scaler, running_mode='train', train_set=None, valid_X=None, valid_Y=None, test_X=None, test_Y=None,
+	batch_size=8, learning_rate=1e-4, n_epochs=60, stop_thr=1e-6, shuffle=True):
 	
 	if running_mode == 'train':
 		train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy = [], [], [], [], []
 		trainloader = DataLoader(train_set,batch_size=batch_size,shuffle=shuffle)
 		optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 		last_loss, loss_change, e_count = float('inf'),float('inf'), 0
-		while (n_epochs-e_count):
+		while (n_epochs-e_count) and loss_change>stop_thr:
 			model, tl = _train(model,trainloader,optimizer)
 			train_loss.append(tl)
-			cur_loss,RMSE,MAPE,accuracy = _test(model, valid_X, valid_Y, valid_m, scaler)
+			cur_loss,RMSE,MAPE,accuracy = _test(model, valid_X, valid_Y, scaler)
 			valid_loss.append(cur_loss)
 			valid_RMSE.append(RMSE)
 			valid_MAPE.append(MAPE)
@@ -31,7 +31,7 @@ def run_model(model,scaler, running_mode='train', train_set=None, valid_X=None, 
 			e_count+=1
 		return model, train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy, e_count
 	else:
-		return _test(model, test_X, test_Y, test_m, scaler)
+		return _test(model, test_X, test_Y, scaler)
 
 def _train(model,data_loader,optimizer, device=torch.device('cpu')):
 
@@ -50,7 +50,7 @@ def _train(model,data_loader,optimizer, device=torch.device('cpu')):
 	return model, np.mean(train_loss)
 
 
-def _test(model, test_X, test_Y, test_m, scaler, device=torch.device('cpu')):
+def _test(model, test_X, test_Y, scaler, device=torch.device('cpu')):
 	model.to(device)
 	inputs = torch.from_numpy(test_X)
 	inputs.to(device)
@@ -60,9 +60,10 @@ def _test(model, test_X, test_Y, test_m, scaler, device=torch.device('cpu')):
 		outputs = scaler.inverse_transform(outputs.reshape(-1,1)).reshape(-1,)
 		test_RMSE = np.sqrt(mean_squared_error(outputs,test_Y))
 		test_MAPE = MAPE(outputs,test_Y)
+		St = scaler.inverse_transform(test_X[:,-1,0].reshape(-1,1)).reshape(-1,)
 		directional_true,directional_prediction = np.ones(test_X.shape[0]),np.ones(test_X.shape[0])
-		directional_true[test_m<=test_Y] = -1
-		directional_prediction[test_m<=outputs] = -1
+		directional_true[St<=test_Y] = -1
+		directional_prediction[St<=outputs] = -1
 		test_accuracy = accuracy_score(directional_true, directional_prediction)
 
 	return loss, test_RMSE, test_MAPE, test_accuracy
