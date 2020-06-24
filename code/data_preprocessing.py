@@ -37,6 +37,9 @@ def preprocess(df, period = 20):
         data_X.append(data[i:i+period])
         data_Y.append(df.iloc[i+period]['Mid'])
     data_X, data_Y = np.array(data_X), np.array(data_Y)
-    train_X, test_X, train_Y, test_Y = train_test_split(data_X, data_Y, train_size = 0.8, random_state = 666)
-    train_X, valid_X, train_Y, valid_Y = train_test_split(train_X, train_Y, train_size = 0.75, random_state = 666)
+    training_size = int(np.round(0.6*data.shape[0]))
+    valid_size = int(np.round(0.2*data.shape[0]))
+    train_X, valid_X, test_X, train_Y, valid_Y, test_Y = \
+        data_X[:training_size,:], data_X[training_size:training_size+valid_size,:], data_X[training_size+valid_size+20:,:],\
+        data_Y[:training_size], data_Y[training_size:training_size+valid_size], data_Y[training_size+valid_size+20:]
     return data_X, data_Y, train_X, scaler.transform(train_Y.reshape(-1,1)), valid_X, valid_Y, test_X, test_Y, scaler

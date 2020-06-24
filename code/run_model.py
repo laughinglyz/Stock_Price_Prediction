@@ -11,14 +11,14 @@ def MAPE(prediction, true):
 	return np.mean(np.abs((true-prediction)/true)) * 100
 
 def run_model(model,scaler, running_mode='train', train_set=None, valid_X=None, valid_Y=None, test_X=None, test_Y=None,
-	batch_size=8, learning_rate=1e-4, n_epochs=60, stop_thr=1e-6, shuffle=True):
+	batch_size=8, learning_rate=1e-4, n_epochs=40, stop_thr=1e-6, shuffle=True):
 	
 	if running_mode == 'train':
 		train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy = [], [], [], [], []
 		trainloader = DataLoader(train_set,batch_size=batch_size,shuffle=shuffle)
 		optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 		last_loss, loss_change, e_count = float('inf'),float('inf'), 0
-		while (n_epochs-e_count) and loss_change>stop_thr:
+		while (n_epochs-e_count):
 			model, tl = _train(model,trainloader,optimizer)
 			train_loss.append(tl)
 			cur_loss,RMSE,MAPE,accuracy = _test(model, valid_X, valid_Y, scaler)
@@ -34,12 +34,13 @@ def run_model(model,scaler, running_mode='train', train_set=None, valid_X=None, 
 		return _test(model, test_X, test_Y, scaler)
 
 def _train(model,data_loader,optimizer, device=torch.device('cpu')):
-
 	model.to(device)
+	model.train()
 	criterion = nn.MSELoss()
 	train_loss = []
 	for data in data_loader:
-		inputs, labels = data[0].to(device),data[1].to(device)
+		inputs, labels = data
+		inputs.to(device)
 		optimizer.zero_grad()
 		outputs = model(inputs)
 		loss = criterion(outputs,labels.float())
@@ -52,6 +53,7 @@ def _train(model,data_loader,optimizer, device=torch.device('cpu')):
 
 def _test(model, test_X, test_Y, scaler, device=torch.device('cpu')):
 	model.to(device)
+	model.eval()
 	inputs = torch.from_numpy(test_X)
 	inputs.to(device)
 	with torch.no_grad():
@@ -62,8 +64,8 @@ def _test(model, test_X, test_Y, scaler, device=torch.device('cpu')):
 		test_MAPE = MAPE(outputs,test_Y)
 		St = scaler.inverse_transform(test_X[:,-1,0].reshape(-1,1)).reshape(-1,)
 		directional_true,directional_prediction = np.ones(test_X.shape[0]),np.ones(test_X.shape[0])
-		directional_true[St<=test_Y] = -1
-		directional_prediction[St<=outputs] = -1
+		directional_true[St>=test_Y] = -1
+		directional_prediction[St>=outputs] = -1
 		test_accuracy = accuracy_score(directional_true, directional_prediction)
 
 	return loss, test_RMSE, test_MAPE, test_accuracy
