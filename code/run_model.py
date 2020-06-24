@@ -7,6 +7,13 @@ from torch.utils.data import DataLoader
 import numpy as np
 from sklearn.metrics import mean_squared_error,accuracy_score
 
+try:
+    import matplotlib.pyplot as plt
+except:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
 def MAPE(prediction, true):
 	return np.mean(np.abs((true-prediction)/true)) * 100
 
@@ -68,6 +75,12 @@ def _test(model, test_X, test_Y, scaler, device=torch.device('cpu')):
 		directional_prediction[St>=outputs] = -1
 		test_accuracy = accuracy_score(directional_true, directional_prediction)
 
+		plt.xlabel("time")
+		plt.ylabel("HSI value")
+		plt.plot(range(len(outputs)),outputs,label="prediction")
+		plt.plot(range(len(outputs)),test_Y,label="actual")
+		plt.legend()
+		plt.show()
 	return loss, test_RMSE, test_MAPE, test_accuracy
 	
 

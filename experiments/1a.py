@@ -58,7 +58,7 @@ for idx, indicator in enumerate(vars):
     )
 
     model, train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy, n_epochs = \
-        run_model(model.float(), scaler, train_set=train_set, valid_X=valid_features, valid_Y=valid_Y, n_epochs=80, shuffle = False)
+        run_model(model.float(), scaler, train_set=train_set, valid_X=valid_features, valid_Y=valid_Y, n_epochs=40, shuffle = False)
 
     plt.xlabel("epoch")
     plt.ylabel("training_loss")
