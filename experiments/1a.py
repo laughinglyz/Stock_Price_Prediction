@@ -1,6 +1,6 @@
 from code import load_daily_stock_price
 from code import preprocess, HSI_Dataset
-from code import run_model, HSI_lstm
+from code import run_model, HSI_lstm, HSI_gru
 import ta
 import pandas as pd
 import numpy as np
@@ -46,9 +46,9 @@ vars = ["Open", "High", "Low", "Close"]+tech_indicators
 lstm_RMSE, lstm_MAPE, lstm_accuracy = [], [], []
 gru_RMSE, gru_MAPE, gru_accuracy = [], [], []
 for idx, indicator in enumerate(vars):
-    train_features = train_X[:,:,[0, idx+10]]
-    valid_features = valid_X[:,:,[0, idx+10]]
-    test_features = test_X[:,:,[0, idx+10]]
+    train_features = train_X[:,:,[0, 10]]
+    valid_features = valid_X[:,:,[0, 10]]
+    test_features = test_X[:,:,[0, 10]]
 
     train_set = HSI_Dataset(train_features,train_Y)
     model = HSI_lstm(
@@ -58,7 +58,7 @@ for idx, indicator in enumerate(vars):
     )
 
     model, train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy, n_epochs = \
-        run_model(model.float(), scaler, train_set=train_set, valid_X=valid_features, valid_Y=valid_Y, n_epochs=40, shuffle = False)
+        run_model(model.float(), scaler, train_set=train_set, valid_X=valid_features, valid_Y=valid_Y, n_epochs=100)
 
     plt.xlabel("epoch")
     plt.ylabel("training_loss")
@@ -88,12 +88,21 @@ for idx, indicator in enumerate(vars):
 
     # filename = indicator+".pt"
     # model.load_state_dict(torch.load(filename))
-    # model.eval()
 
+    model.eval()
     inputs = torch.from_numpy(test_features)
     inputs.to(torch.device('cpu'))
     with torch.no_grad():
         outputs = scaler.inverse_transform(model(inputs).numpy().reshape(-1,1)).reshape(-1,)
+        St = scaler.inverse_transform(test_features[:,-1,0].reshape(-1,1)).reshape(-1,)
+
+        plt.xlabel("time")
+        plt.ylabel("HSI value")
+        plt.plot(range(len(outputs)),outputs,label="prediction")
+        plt.plot(range(len(outputs)),St,label="St")
+        plt.legend()
+        plt.show()
+
         plt.xlabel("time")
         plt.ylabel("HSI value")
         plt.plot(range(len(outputs)),outputs,label="prediction")
@@ -101,10 +110,30 @@ for idx, indicator in enumerate(vars):
         plt.legend()
         plt.show()
 
-    filename = indicator+".pt"
-    f = open(filename,"w+")
-    f.close()
-    torch.save(model.state_dict(), filename)
+    inputs = torch.from_numpy(train_features)
+    inputs.to(torch.device('cpu'))
+    with torch.no_grad():
+        outputs = scaler.inverse_transform(model(inputs).numpy().reshape(-1,1)).reshape(-1,)
+        St = scaler.inverse_transform(train_features[:,-1,0].reshape(-1,1)).reshape(-1,)
+
+        plt.xlabel("time")
+        plt.ylabel("HSI value")
+        plt.plot(range(len(outputs)),outputs,label="prediction")
+        plt.plot(range(len(outputs)),St,label="St")
+        plt.legend()
+        plt.show()
+
+        plt.xlabel("time")
+        plt.ylabel("HSI value")
+        plt.plot(range(len(outputs)),outputs,label="prediction")
+        plt.plot(range(len(outputs)),scaler.inverse_transform(train_Y.reshape(-1,1)).reshape(-1,),label="actual")
+        plt.legend()
+        plt.show()
+
+    # filename = indicator+".pt"
+    # f = open(filename,"w+")
+    # f.close()
+    # torch.save(model.state_dict(), filename)
     break
  
 # plt.xticks(range(len(vars)),vars)

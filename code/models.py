@@ -32,7 +32,7 @@ class HSI_lstm(nn.Module):
         # h_n shape (n_layers, batch, hidden_size)  
         # h_c shape (n_layers, batch, hidden_size)
         input = input.float()
-        r_out, (h_n, h_c) = self.rnn(input, None)
+        r_out, (h_n, h_c) = self.rnn(input)
         return self.output(r_out[:,-1,:])
 
 class HSI_gru(nn.Module):
@@ -60,8 +60,7 @@ class HSI_gru(nn.Module):
     def forward(self, input):
         # x shape (batch, time_step, input_size)
         # r_out shape (batch, time_step, output_size)
-        # h_n shape (n_layers, batch, hidden_size)  
-        # h_c shape (n_layers, batch, hidden_size)
+        # h_n shape (n_layers, batch, hidden_size) 
         input = input.float()
-        r_out, (h_n, h_c) = self.rnn(input, None)
+        r_out, h_n = self.rnn(input)
         return self.output(r_out[:,-1,:])

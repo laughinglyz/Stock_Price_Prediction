@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import ta
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
 tech_indicators = ['volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'momentum_mfi',
@@ -28,18 +27,40 @@ tech_indicators = ['volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'momen
 
 def preprocess(df, period = 20):
     df['Mid'] = df[['High','Low']].mean(axis = 1)
-    df = df[['Mid', "Open", "High", "Low", "Close"]+tech_indicators]
+    df = df[['Mid', "Open", "High", "Low", "Close"]+tech_indicators].copy(deep=True)
     scaler =  MinMaxScaler()
     data = scaler.fit_transform(df)
     scaler.fit(df['Mid'].to_numpy().reshape(-1,1))
     data_X, data_Y = [],[]
-    for i in range(data.shape[0]-period):
+    for i in range(data.shape[0]-period-5):
         data_X.append(data[i:i+period])
-        data_Y.append(df.iloc[i+period]['Mid'])
+        data_Y.append(df.iloc[i+period+5]['Mid'])
     data_X, data_Y = np.array(data_X), np.array(data_Y)
     training_size = int(np.round(0.6*data.shape[0]))
     valid_size = int(np.round(0.2*data.shape[0]))
     train_X, valid_X, test_X, train_Y, valid_Y, test_Y = \
-        data_X[:training_size,:], data_X[training_size:training_size+valid_size,:], data_X[training_size+valid_size+20:,:],\
-        data_Y[:training_size], data_Y[training_size:training_size+valid_size], data_Y[training_size+valid_size+20:]
-    return data_X, data_Y, train_X, scaler.transform(train_Y.reshape(-1,1)), valid_X, valid_Y, test_X, test_Y, scaler
+        data_X[:training_size,:], data_X[training_size+period:training_size+valid_size+period,:], data_X[training_size+valid_size+period:,:],\
+        data_Y[:training_size], data_Y[training_size+period:training_size+valid_size+period], data_Y[training_size+valid_size+period:]
+    # scaler.fit(train_Y.reshape(-1,1))
+    return data_X, data_Y, train_X, scaler.transform(train_Y.reshape(-1,1)), valid_X, valid_Y, test_X, test_Y, scaler 
+
+def preprocess_RC(df, period = 20):
+    df['Mid'] = df[['High','Low']].mean(axis = 1)
+    df = df[['Mid', "Open", "High", "Low", "Close"]+tech_indicators].copy(deep=True)
+    scaler =  MinMaxScaler()
+    df.loc[:,["Open", "High", "Low", "Close"]+tech_indicators] = scaler.fit_transform(df[["Open", "High", "Low", "Close"]+tech_indicators])
+    data_X, data_Y = [],[]
+    for i in range(df.shape[0]-period-5):
+        start = df.iloc[i]['Mid']
+        x, y = df.iloc[i:i+period].to_numpy(), df.iloc[i+period+5]['Mid']
+        x, y = (x-start)/start, (y-start)/start
+        x[0,0] = start
+        data_X.append(x)
+        data_Y.append(y)
+    data_X, data_Y = np.array(data_X), np.array(data_Y)
+    training_size = int(np.round(0.6*df.shape[0]))
+    valid_size = int(np.round(0.2*df.shape[0]))
+    train_X, valid_X, test_X, train_Y, valid_Y, test_Y = \
+        data_X[:training_size,:], data_X[training_size+period:training_size+valid_size+period,:], data_X[training_size+valid_size+period:,:],\
+        data_Y[:training_size], data_Y[training_size+period:training_size+valid_size+period], data_Y[training_size+valid_size+period:]
+    return data_X, data_Y, train_X, train_Y, valid_X, valid_Y, test_X, test_Y
