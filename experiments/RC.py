@@ -46,15 +46,16 @@ vars = ["Open", "High", "Low", "Close"]+tech_indicators
 lstm_RMSE, lstm_MAPE, lstm_accuracy = [], [], []
 gru_RMSE, gru_MAPE, gru_accuracy = [], [], []
 for idx, indicator in enumerate(vars):
-    train_features = train_X[:,:,[0, 10]]
-    valid_features = valid_X[:,:,[0, 10]]
-    test_features = test_X[:,:,[0, 10]]
+    train_features = train_X[:,:,[0, idx+1]]
+    valid_features = valid_X[:,:,[0, idx+1]]
+    test_features = test_X[:,:,[0, idx+1]]
 
     train_set = HSI_Dataset(train_features,train_Y)
     model = HSI_lstm(
         input_size=2,
         hidden_size=64,
-        num_layers=1
+        num_layers=2,
+        drop_out=0.25
     )
 
     model, train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy, n_epochs = \
@@ -97,6 +98,17 @@ for idx, indicator in enumerate(vars):
         starts = test_features[:,0,0]
         outputs = (outputs * starts + starts)
         test_Y = (test_Y * starts + starts)
+         
+
+        plt.xlabel("time")
+        plt.ylabel("HSI value")
+        plt.plot(range(len(outputs)),outputs,label="prediction")
+        plt.plot(range(len(outputs)),test_Y,label="actual")
+        plt.legend()
+        plt.show()
+
+        outputs = outputs[5:]
+        test_Y = test_Y[:-5]
 
         plt.xlabel("time")
         plt.ylabel("HSI value")

@@ -18,7 +18,7 @@ def MAPE(prediction, true):
 	return np.mean(np.abs((true-prediction)/true)) * 100
 
 def run_model(model, running_mode='train', train_set=None, valid_X=None, valid_Y=None, test_X=None, test_Y=None,
-	batch_size=8, learning_rate=1e-4, n_epochs=40, stop_thr=1e-5, shuffle=True):
+	batch_size=8, learning_rate=1e-3, n_epochs=40, stop_thr=1e-5, shuffle=True):
 	
 	if running_mode == 'train':
 		train_loss, valid_loss, valid_RMSE, valid_MAPE, valid_accuracy = [], [], [], [], []

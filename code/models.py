@@ -17,13 +17,14 @@ class HSI_lstm(nn.Module):
 
     """
 
-    def __init__(self, input_size, hidden_size, num_layers):
+    def __init__(self, input_size, hidden_size, num_layers, drop_out):
         super(HSI_lstm, self).__init__()  
         self.rnn = nn.LSTM(
             input_size = input_size,
             hidden_size = hidden_size,
             num_layers = num_layers,
-            batch_first= True)
+            batch_first= True,
+            dropout = drop_out)
         self.output = nn.Linear(hidden_size,1)
 
     def forward(self, input):
@@ -54,7 +55,8 @@ class HSI_gru(nn.Module):
             input_size = input_size,
             hidden_size = hidden_size,
             num_layers = num_layers,
-            batch_first= True)
+            batch_first= True,
+            dropout = drop_out)
         self.output = nn.Linear(hidden_size,1)
 
     def forward(self, input):
