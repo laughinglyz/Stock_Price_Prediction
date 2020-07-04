@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.autograd import Variable
 import numpy as np
 
  
@@ -66,3 +67,37 @@ class HSI_gru(nn.Module):
         input = input.float()
         r_out, h_n = self.rnn(input)
         return self.output(r_out[:,-1,:])
+
+
+class VAE(nn.Module):
+    def __init__(self, input_dim, hidden_size, z_size):
+        super(VAE, self).__init__()
+
+        self.fc1 = nn.Linear(input_dim, hidden_size)
+        self.fc21 = nn.Linear(hidden_size, z_size)
+        self.fc22 = nn.Linear(hidden_size, z_size)
+        self.fc3 = nn.Linear(z_size, hidden_size)
+        self.fc4 = nn.Linear(hidden_size, input_dim)
+
+    def encode(self, x):
+        x = x.float()
+        h1 = F.relu(self.fc1(x))
+        return self.fc21(h1), self.fc22(h1)
+
+    def reparametrize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        if torch.cuda.is_available():
+            eps = torch.cuda.FloatTensor(std.size()).normal_()
+        else:
+            eps = torch.FloatTensor(std.size()).normal_()
+        eps = Variable(eps)
+        return eps.mul(std).add_(mu)
+
+    def decode(self, z):
+        h3 = F.relu(self.fc3(z))
+        return torch.sigmoid(self.fc4(h3))
+
+    def forward(self, x):
+        mu, logvar = self.encode(x)
+        z = self.reparametrize(mu, logvar)
+        return self.decode(z), mu, logvar

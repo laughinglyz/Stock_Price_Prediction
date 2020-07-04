@@ -32,9 +32,9 @@ def preprocess(df, period = 20):
     data = scaler.fit_transform(df)
     scaler.fit(df['Mid'].to_numpy().reshape(-1,1))
     data_X, data_Y = [],[]
-    for i in range(data.shape[0]-period-5):
+    for i in range(data.shape[0]-period):
         data_X.append(data[i:i+period])
-        data_Y.append(df.iloc[i+period+5]['Mid'])
+        data_Y.append(df.iloc[i+period]['Mid'])
     data_X, data_Y = np.array(data_X), np.array(data_Y)
     training_size = int(np.round(0.6*data.shape[0]))
     valid_size = int(np.round(0.2*data.shape[0]))
@@ -64,3 +64,14 @@ def preprocess_RC(df, period = 20):
         data_X[:training_size,:], data_X[training_size+period:training_size+valid_size+period,:], data_X[training_size+valid_size+period:,:],\
         data_Y[:training_size], data_Y[training_size+period:training_size+valid_size+period], data_Y[training_size+valid_size+period:]
     return data_X, data_Y, train_X, train_Y, valid_X, valid_Y, test_X, test_Y
+
+def preprocess_VAE(df):
+
+    df['Mid'] = df[['High','Low']].mean(axis = 1)
+    scaler =  MinMaxScaler()
+    data = scaler.fit_transform(df['Mid'].to_numpy().reshape(-1,1))
+    training_size = int(np.round(0.8*df.shape[0]))
+    train_data, test_data = data[:training_size], data[training_size:]
+    train_X, train_Y, test_X, test_Y = train_data[:-1], train_data[1:], test_data[:-1], test_data[1:]
+
+    return train_X, train_Y, test_X, test_Y,scaler

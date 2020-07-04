@@ -45,8 +45,6 @@ df = ta.add_all_ta_features(df, "Open", "High", "Low", "Close", "Volume", True)
 data_X, data_Y, train_X, train_Y, valid_X, valid_Y, test_X, test_Y = preprocess_RC(df)
 os.chdir(PATH)
 vars = ["Open", "High", "Low", "Close"]+tech_indicators
-lstm_RMSE, lstm_MAPE, lstm_accuracy = [], [], []
-gru_RMSE, gru_MAPE, gru_accuracy = [], [], []
 
 train_features = train_X[:,:,0]
 valid_features = valid_X[:,:,0]
