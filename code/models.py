@@ -50,7 +50,7 @@ class HSI_gru(nn.Module):
 
     """
 
-    def __init__(self, input_size, hidden_size, num_layers):
+    def __init__(self, input_size, hidden_size, num_layers, drop_out):
         super(HSI_gru, self).__init__()
         self.rnn = nn.GRU(
             input_size = input_size,
@@ -81,7 +81,7 @@ class VAE(nn.Module):
 
     def encode(self, x):
         x = x.float()
-        h1 = F.relu(self.fc1(x))
+        h1 = F.gelu(self.fc1(x))
         return self.fc21(h1), self.fc22(h1)
 
     def reparametrize(self, mu, logvar):
@@ -94,7 +94,7 @@ class VAE(nn.Module):
         return eps.mul(std).add_(mu)
 
     def decode(self, z):
-        h3 = F.relu(self.fc3(z))
+        h3 = F.gelu(self.fc3(z))
         return torch.sigmoid(self.fc4(h3))
 
     def forward(self, x):

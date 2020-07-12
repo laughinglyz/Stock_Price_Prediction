@@ -1,7 +1,17 @@
 import pandas as pd
 import numpy as np
 import ta
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
+try:
+    import matplotlib.pyplot as plt
+except:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
 
 tech_indicators = ['volume_adi', 'volume_obv', 'volume_cmf', 'volume_fi', 'momentum_mfi',
        'volume_em', 'volume_sma_em', 'volume_vpt', 'volume_nvi', 'volume_vwap',
@@ -68,10 +78,32 @@ def preprocess_RC(df, period = 20):
 def preprocess_VAE(df):
 
     df['Mid'] = df[['High','Low']].mean(axis = 1)
-    scaler =  MinMaxScaler()
-    data = scaler.fit_transform(df['Mid'].to_numpy().reshape(-1,1))
+    scaler =  StandardScaler()
     training_size = int(np.round(0.8*df.shape[0]))
+    scaler.fit(df['Mid'].to_numpy()[:training_size].reshape(-1,1))
+    data = scaler.transform(df['Mid'].to_numpy().reshape(-1,1))
     train_data, test_data = data[:training_size], data[training_size:]
     train_X, train_Y, test_X, test_Y = train_data[:-1], train_data[1:], test_data[:-1], test_data[1:]
 
     return train_X, train_Y, test_X, test_Y,scaler
+
+def preprocess_PCA_Fourier(df,pca_components,fft_components):
+    
+    df['Mid'] = df[['High','Low']].mean(axis = 1)
+    df.drop(columns=['Date'], inplace=True)
+    scaler =  MinMaxScaler()
+    mid = scaler.fit_transform(df['Mid'].to_numpy().reshape(-1,1)).reshape(-1,)
+    mid_fft = np.fft.fft(mid)
+    mid_fft[fft_components:-fft_components] = 0
+    mid_fft = np.fft.ifft(mid_fft)
+    df['fft_abs'] = np.abs(mid_fft)
+    df['fft_ang'] = np.angle(mid_fft)
+    data = scaler.fit_transform(df)
+    pca = PCA(n_components=pca_components)
+    data = pca.fit_transform(data)
+    training_size = int(np.round(0.8*df.shape[0]))
+    X,Y,St = data[:-1],mid[1:],mid[:-1]
+    train_X, test_X, train_Y, test_Y, _ ,St = train_test_split(X,Y,St,train_size=training_size)
+    scaler.fit(df['Mid'].to_numpy().reshape(-1,1))
+    return train_X, train_Y, test_X, test_Y, St, scaler
+    
