@@ -113,6 +113,12 @@ accuracies.append(accuracy_score(directional_true, directional_prediction))
 # plt.legend()
 # plt.show()
 
+print(model_names)
+print(losses)
+print(RMSEs)
+print(MAPEs)
+print(accuracies)
+
 plt.bar(model_names,losses)
 plt.title("loss")
 plt.show()

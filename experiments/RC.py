@@ -46,13 +46,13 @@ vars = ["Open", "High", "Low", "Close"]+tech_indicators
 lstm_RMSE, lstm_MAPE, lstm_accuracy = [], [], []
 gru_RMSE, gru_MAPE, gru_accuracy = [], [], []
 for idx, indicator in enumerate(vars):
-    train_features = train_X[:,:,[0, idx+1]]
-    valid_features = valid_X[:,:,[0, idx+1]]
-    test_features = test_X[:,:,[0, idx+1]]
+    train_features = train_X[:,:,:]
+    valid_features = valid_X[:,:,:]
+    test_features = test_X[:,:,:]
 
     train_set = HSI_Dataset(train_features,train_Y)
-    model = HSI_lstm(
-        input_size=2,
+    model = HSI_gru(
+        input_size=train_features.shape[-1],
         hidden_size=64,
         num_layers=2,
         drop_out=0.25
@@ -79,10 +79,10 @@ for idx, indicator in enumerate(vars):
     loss, test_RMSE, test_MAPE, test_accuracy = \
         run_model(model, running_mode='test', test_X=test_features, test_Y=test_Y)
 
-    print(loss)
-    print(test_RMSE)
-    print(test_MAPE)
-    print(test_accuracy)
+    print("loss={}".format(loss))
+    print("RMSE={}".format(test_RMSE))
+    print("MAPE={}".format(test_MAPE))
+    print("accuracy={}".format(test_accuracy))
     lstm_RMSE.append(test_RMSE)
     lstm_MAPE.append(test_MAPE)
     lstm_accuracy.append(test_accuracy)
@@ -98,7 +98,6 @@ for idx, indicator in enumerate(vars):
         starts = test_features[:,0,0]
         outputs = (outputs * starts + starts)
         test_Y = (test_Y * starts + starts)
-         
 
         plt.xlabel("time")
         plt.ylabel("HSI value")
@@ -107,13 +106,13 @@ for idx, indicator in enumerate(vars):
         plt.legend()
         plt.show()
 
-        outputs = outputs[5:]
-        test_Y = test_Y[:-5]
+        outputs = outputs[1:]
+        test_Y = test_Y[:-1]
 
         plt.xlabel("time")
         plt.ylabel("HSI value")
         plt.plot(range(len(outputs)),outputs,label="prediction")
-        plt.plot(range(len(outputs)),test_Y,label="actual")
+        plt.plot(range(len(outputs)),test_Y,label="St")
         plt.legend()
         plt.show()
 

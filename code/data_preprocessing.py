@@ -60,9 +60,9 @@ def preprocess_RC(df, period = 20):
     scaler =  MinMaxScaler()
     df.loc[:,["Open", "High", "Low", "Close"]+tech_indicators] = scaler.fit_transform(df[["Open", "High", "Low", "Close"]+tech_indicators])
     data_X, data_Y = [],[]
-    for i in range(df.shape[0]-period-5):
+    for i in range(df.shape[0]-period):
         start = df.iloc[i]['Mid']
-        x, y = df.iloc[i:i+period].to_numpy(), df.iloc[i+period+5]['Mid']
+        x, y = df.iloc[i:i+period].to_numpy(), df.iloc[i+period]['Mid']
         x, y = (x-start)/start, (y-start)/start
         x[0,0] = start
         data_X.append(x)
@@ -106,4 +106,3 @@ def preprocess_PCA_Fourier(df,pca_components,fft_components):
     train_X, test_X, train_Y, test_Y, _ ,St = train_test_split(X,Y,St,train_size=training_size)
     scaler.fit(df['Mid'].to_numpy().reshape(-1,1))
     return train_X, train_Y, test_X, test_Y, St, scaler
-    
